@@ -1,166 +1,144 @@
-import io.kotest.core.spec.style.DescribeSpec
-import io.mockk.mockk
-import java.time.LocalDateTime
+package com.taskmanager.angelval.taskmanager
+
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import java.util.Optional
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBeNull
-import io.kotest.assertions.throwables.shouldThrow
-import io.mockk.every
-import io.mockk.verify
+import kotlin.NoSuchElementException
+import com.taskmanager.angelval.taskmanager.model.Task
+import com.taskmanager.angelval.taskmanager.repository.TaskRepository
+import com.taskmanager.angelval.taskmanager.service.TaskService
+import org.mockito.kotlin.*
+import java.util.*
 
+package com.taskmanager.angelval.taskmanager.service
 
+import com.taskmanager.angelval.taskmanager.model.Task
+import com.taskmanager.angelval.taskmanager.repository.TaskRepository
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.kotlin.doNothing
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
-class TaskServiceSpec : DescribeSpec({
-    val mockTaskRepository = mockk<TaskRepository>()
-    val taskService = TaskService(mockTaskRepository)
+@ExtendWith(MockitoExtension::class)
+class TaskServiceSpec {
 
-    describe("TaskService") {
-        describe("createTask") {
-            context("con datos válidos") {
-                it("debe crear y retornar una nueva tarea") {
-                    val taskDto = TaskDto("Tarea test", "Descripción test", false)
-                    val savedTask = Task(1, "Tarea test", "Descripción test", false, LocalDateTime.now())
-                    every { mockTaskRepository.save(any()) } returns savedTask
+    @Mock
+    private lateinit var taskRepository: TaskRepository
 
-                    val result = taskService.createTask(taskDto)
+    @InjectMocks
+    private lateinit var taskService: TaskService
 
-                    result.shouldNotBeNull()
-                    result.id shouldBe 1
-                }
-            }
-        }
+    private lateinit var task: Task
+
+    @BeforeEach
+    fun setUp() {
+        task = Task(
+            id = 1L,
+            title = "Test Task",
+            description = "Test Description",
+            completed = false
+        )
     }
-})
 
+    @Test
+    fun `should get all tasks`() {
+        // Given
+        val expectedTasks = listOf(task)
+        whenever(taskRepository.findAll()).thenReturn(expectedTasks)
 
-class TaskService
-    val taskService = TaskService(mockTaskRepository)
+        // When
+        val actualTasks = taskService.getAllTasks()
 
-    describe("TaskService") {
-        describe("createTask") {
-            context("con datos válidos") {
-                it("debe crear y retornar una nueva tarea") {
-                    val taskDto = TaskDto("Tarea test", "Descripción test", false)
-                    val savedTask = Task(1, "Tarea test", "Descripción test", false, LocalDateTime.now())
-                    every { mockTaskRepository.save(any()) } returns savedTask
-
-                    val result = taskService.createTask(taskDto)
-
-                    result.shouldNotBeNull()
-                    result.id shouldBe 1
-                }
-                    every { mockTaskRepository.save(any()) } returns savedTask
-
-                    val result = taskService.createTask(taskDto)
-
-                    result.shouldNotBeNull()
-                    result.id shouldBe 1
-                    verify { mockTaskRepository.save(any()) }
-                }
-            }
-        }
-
-        describe("getAllTasks") {
-            context("cuando hay tareas") {
-                it("debe retornar lista de tareas") {
-                    val tasks = listOf(
-                        Task(1, "Tarea 1", "Desc 1", false, LocalDateTime.now()),
-                        Task(2, "Tarea 2", "Desc 2", true, LocalDateTime.now())
-                    )
-
-                    every { mockTaskRepository.findAll() } returns tasks
-
-                    val result = taskService.getAllTasks()
-
-                    result.size shouldBe 2
-                }
-            }
-
-            context("cuando no hay tareas") {
-                it("debe retornar lista vacía") {
-                    every { mockTaskRepository.findAll() } returns emptyList()
-
-                    val result = taskService.getAllTasks()
-
-                    result.isEmpty() shouldBe true
-                }
-            }
-        }
-
-        describe("getTaskById") {
-            context("con ID existente") {
-                it("debe retornar la tarea") {
-                    val task = Task(1, "Tarea test", "Desc test", false, LocalDateTime.now())
-                    every { mockTaskRepository.findById(1) } returns Optional.of(task)
-
-                    val result = taskService.getTaskById(1)
-
-                    result.shouldNotBeNull()
-                    result.id shouldBe 1
-                }
-            }
-
-            context("con ID inexistente") {
-                it("debe lanzar TaskNotFoundException") {
-                    every { mockTaskRepository.findById(999) } returns Optional.empty()
-
-                    shouldThrow<TaskNotFoundException> {
-                        taskService.getTaskById(999)
-                    }
-                }
-            }
-        }
-
-        describe("updateTask") {
-            context("con tarea existente") {
-                it("debe actualizar y retornar la tarea") {
-                    val existingTask = Task(1, "Original", "Desc", false, LocalDateTime.now())
-                    val updatedDto = TaskDto("Actualizada", "Nueva desc", true)
-
-                    every { mockTaskRepository.findById(1) } returns Optional.of(existingTask)
-                    every { mockTaskRepository.save(any()) } returnsArgument 0
-
-                    val result = taskService.updateTask(1, updatedDto)
-
-                    result.title shouldBe "Actualizada"
-                    result.description shouldBe "Nueva desc"
-                    result.completed shouldBe true
-                }
-            }
-
-            context("con tarea inexistente") {
-                it("debe lanzar TaskNotFoundException") {
-                    every { mockTaskRepository.findById(999) } returns Optional.empty()
-
-                    shouldThrow<TaskNotFoundException> {
-                        taskService.updateTask(999, TaskDto("Tarea", "Desc", false))
-                    }
-                }
-            }
-        }
-
-        describe("deleteTask") {
-            context("con ID existente") {
-                it("debe eliminar y retornar true") {
-                    every { mockTaskRepository.existsById(1) } returns true
-                    every { mockTaskRepository.deleteById(1) } returns Unit
-
-                    val result = taskService.deleteTask(1)
-
-                    result shouldBe true
-                    verify { mockTaskRepository.deleteById(1) }
-                }
-            }
-
-            context("con ID inexistente") {
-                it("debe retornar false") {
-                    every { mockTaskRepository.existsById(999) } returns false
-
-                    val result = taskService.deleteTask(999)
-
-                    result shouldBe false
-                }
-            }
-        }
+        // Then
+        assertEquals(expectedTasks, actualTasks)
+        verify(taskRepository, times(1)).findAll()
     }
-})
+
+    @Test
+    fun `should get task by id`() {
+        // Given
+        whenever(taskRepository.findById(1L)).thenReturn(Optional.of(task))
+
+        // When
+        val foundTask = taskService.getTaskById(1L)
+
+        // Then
+        assertTrue(foundTask.isPresent)
+        assertEquals(task, foundTask.get())
+        verify(taskRepository, times(1)).findById(1L)
+    }
+
+    @Test
+    fun `should create task`() {
+        // Given
+        whenever(taskRepository.save(any())).thenReturn(task)
+
+        // When
+        val createdTask = taskService.createTask(task)
+
+        // Then
+        assertNotNull(createdTask)
+        assertEquals(task, createdTask)
+        verify(taskRepository, times(1)).save(task)
+    }
+
+    @Test
+    fun `should update task`() {
+        // Given
+        val updatedTask = task.copy(
+            title = "Updated Title",
+            description = "Updated Description",
+            completed = true
+        )
+
+        whenever(taskRepository.findById(1L)).thenReturn(Optional.of(task))
+        whenever(taskRepository.save(any())).thenReturn(updatedTask)
+
+        // When
+        val result = taskService.updateTask(1L, updatedTask)
+
+        // Then
+        assertNotNull(result)
+        assertEquals("Updated Title", result.title)
+        assertEquals("Updated Description", result.description)
+        assertTrue(result.completed)
+        verify(taskRepository, times(1)).findById(1L)
+        verify(taskRepository, times(1)).save(any())
+    }
+
+    @Test
+    fun `should delete task`() {
+        // Given
+        doNothing().whenever(taskRepository).deleteById(1L)
+
+        // When
+        taskService.deleteTask(1L)
+
+        // Then
+        verify(taskRepository, times(1)).deleteById(1L)
+    }
+
+    @Test
+    fun `should throw exception when updating non-existent task`() {
+        // Given
+        whenever(taskRepository.findById(any())).thenReturn(Optional.empty())
+
+        // When / Then
+        assertThrows(NoSuchElementException::class.java) {
+            taskService.updateTask(99L, task)
+        }
+        verify(taskRepository, never()).save(any())
+    }
+}

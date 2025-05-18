@@ -191,26 +191,26 @@ class ConsolaUI: Consola {
     }
 
 
-    override fun listarActividades(actividades: MutableList<Actividad>) {
-        val mostradas = mutableSetOf<String>() // Para evitar duplicados en la salida
+    private fun mostrarSubtareas(actividad: Tarea) {
+        if (actividad.subTareas.isNotEmpty()) {
+            println("Subtareas:")
+            actividad.subTareas.forEach { subtarea ->
+                println("    - ${subtarea.obtenerDetalle()}")
+            }
+        } else {
+            println("Subtareas:\n    Sin subtareas")
+        }
+    }
 
+    override fun listarActividades(actividades: MutableList<Actividad>) {
+        val mostradas = mutableSetOf<String>()
         for (actividad in actividades) {
             val detalle = actividad.obtenerDetalle()
             if (detalle !in mostradas) {
                 println(detalle)
-                mostradas.add(detalle) // Registrar como mostrada
-
+                mostradas.add(detalle)
                 when (actividad) {
-                    is Tarea -> {
-                        if (actividad.subTareas.isNotEmpty()) {
-                            println("Subtareas:")
-                            actividad.subTareas.forEach { subtarea ->
-                                println("    - ${subtarea.obtenerDetalle()}")
-                            }
-                        } else {
-                            println("Subtareas:\n    Sin subtareas")
-                        }
-                    }
+                    is Tarea -> mostrarSubtareas(actividad)
                     is Evento -> println("Sin subtareas (Evento).")
                 }
             }

@@ -68,17 +68,21 @@ class ActividadService(
     }
 
 
+    private fun asociarActividadAUsuario(usuario: Usuario, actividad: Actividad) {
+        if (actividad.obtenerUsuario() == usuario.nombre && !usuario.repoActividades.actividades.contains(actividad)) {
+            usuario.repoActividades.actividades.add(actividad)
+            when (actividad) {
+                is Tarea -> usuario.repoActividades.tareas.add(actividad)
+                is Evento -> usuario.repoActividades.eventos.add(actividad)
+            }
+        }
+    }
+
     private fun usuariosConActividades() {
         try {
             for (usuario in servicioUsuario.usuariosRepo.usuarios) {
                 for (actividad in repo.actividades) {
-                    if (actividad.obtenerUsuario() == usuario.nombre && !usuario.repoActividades.actividades.contains(actividad)) {
-                        usuario.repoActividades.actividades.add(actividad)
-                        when (actividad) {
-                            is Tarea -> usuario.repoActividades.tareas.add(actividad)
-                            is Evento -> usuario.repoActividades.eventos.add(actividad)
-                        }
-                    }
+                    asociarActividadAUsuario(usuario, actividad)
                 }
             }
             logger.trace("Usuarios asociados con actividades correctamente.")
@@ -153,36 +157,32 @@ class ActividadService(
         } while (opcion != 0)
     }
 
-    private fun filtradoPorUsuarios(){
+    private fun mostrarActividadesUsuario(usuario: Usuario) {
+        for (actividad in usuario.repoActividades.actividades) {
+            println(actividad.obtenerDetalle())
+        }
+    }
+
+    private fun filtradoPorUsuarios() {
         var seguir = true
-        do{
-            var encontrado = false
-            try{
+        do {
+            try {
                 println("Introduzca el nombre del usuario")
                 val nombre = readln().trim()
+                val usuario = servicioUsuario.usuariosRepo.usuarios.find { it.nombre == nombre }
 
-                for(usuario in servicioUsuario.usuariosRepo.usuarios){
-                    if(usuario.nombre == nombre){
-                        encontrado = true
-                        for(actividad in usuario.repoActividades.actividades){
-                            println(actividad.obtenerDetalle())
-                        }
-                    }
-                }
-
-                if(!encontrado){
+                if (usuario != null) {
+                    mostrarActividadesUsuario(usuario)
+                } else {
                     println("El usuario introducido no ha sido encontrado")
-                    seguir = consola.preguntarSeguir()
                 }
-
-                else{
-                    seguir = consola.preguntarSeguir()
-                }
-            }catch(e: Exception){
+                seguir = consola.preguntarSeguir()
+            } catch (e: Exception) {
                 println("¡Error! Detalle: $e")
             }
-        }while(seguir)
+        } while (seguir)
     }
+
     private fun filtradoPorEtiquetas(){
         var opcion = -1
 

@@ -56,6 +56,6 @@ El problema de anidamiento se soluciona extrayendo la lógica de impresión de a
 El problema de anidamiento en usuariosConActividades se soluciona extrayendo la lógica de asociación de actividades a una función auxiliar. Así se reduce la profundidad y mejora la legibilidad.
 
 
-![img.png](img.png)
+![img.png](MEJORA-TASK/imagenes/img.png)
 
 En esta línea de código "baseline = file("config/detekt/detekt.xml")" se establece la ruta del archivo de configuración de Detekt. Este archivo contiene las reglas y configuraciones personalizadas que se aplicarán durante el análisis del código. Al especificar esta ruta, se asegura que Detekt guarde un registro de los problemas detectados y pueda comparar el código actual con el estado anterior, facilitando la identificación de nuevos problemas y la mejora continua del código.

@@ -1,4 +1,4 @@
-package Dominio
+package dominio
 
 /**
  * Clase evento con constructor privado
@@ -16,17 +16,17 @@ class Evento private constructor(
         require(Utils.esFechaValida(fechaEvento)){"La fecha tiene que tener un formato válida (dd-MM-yyyy)"}
     }
 
-    private constructor(
-        id: String,
-        descripcion: String,
-        usuario: String,
-        ubicacion: String,
-        fechaEvento: String,
-        fechaCreacion: String
-    ) : this(descripcion, usuario, ubicacion, fechaEvento) {
-        this.id = id
-        this.fechaCreacion = fechaCreacion
+
+    private constructor(params: EventoParams) : this(
+        params.descripcion,
+        params.usuario,
+        params.ubicacion,
+        params.fecha
+    ) {
+        this.id = params.id
+        this.fechaCreacion = params.fechaCreacion
     }
+
     override var fecha = fechaEvento
 
     /**
@@ -58,16 +58,10 @@ class Evento private constructor(
             return Evento(descripcion,usuario,ubicacion,fecha)
         }
 
-        fun creaInstancia(
-            usuario:String,
-            id:String,
-            descripcion:String,
-            fechaCreacion:String,
-            fecha:String,
-            ubicacion:String
+        fun creaInstancia(parametros:EventoParams
         ):Evento
         {
-            return Evento(usuario,id,descripcion,fechaCreacion,fecha,ubicacion)
+            return Evento(EventoParams(parametros.usuario,parametros.id,parametros.descripcion,parametros.fechaCreacion,parametros.fecha,parametros.ubicacion))
         }
     }
 }

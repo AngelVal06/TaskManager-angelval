@@ -1,9 +1,9 @@
-package Dominio
+package dominio
 
 class Tarea private constructor(
     descripcion: String,
     usuario: String,
-    val etiqueta: String
+    val etiqueta: EtiquetasTareas
 ) : Actividad(descripcion, usuario) {
 
     init{
@@ -17,7 +17,7 @@ class Tarea private constructor(
     private constructor(
         usuario: String,
         id: String,
-        etiqueta: String,
+        etiqueta: EtiquetasTareas,
         fechaCreacion: String,
         descripcion: String,
         estado: String
@@ -59,27 +59,18 @@ class Tarea private constructor(
         var contador = 0
 
         fun creaInstancia(descripcion: String, usuario: String, etiqueta: EtiquetasTareas): Tarea {
-            return Tarea(descripcion, usuario, etiqueta.toString())
+            return Tarea(descripcion, usuario, etiqueta)
         }
 
-        data class DatosTarea(
-            val usuario: String,
-            val id: String,
-            val descripcion: String,
-            val fechaCreacion: String,
-            val fecha: String,
-            val ubicacion: String
-        )
-
-        fun creaInstancia(datos: DatosTarea): Tarea {
-            return Tarea(
-                datos.usuario,
-                datos.id,
-                datos.descripcion,
-                datos.fechaCreacion,
-                datos.fecha,
-                datos.ubicacion
-            )
+        fun creaInstancia(
+            usuario: String,
+            id: String,
+            etiqueta: EtiquetasTareas,
+            fechaCreacion: String,
+            descripcion: String,
+            estado: String
+        ): Tarea {
+            return Tarea(usuario, id, etiqueta, fechaCreacion, descripcion, estado)
         }
     }
 }

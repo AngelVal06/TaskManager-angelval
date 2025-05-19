@@ -1,10 +1,10 @@
-package Servicios
+package servicios
 
-import AccesoDatos.*
-import Dominio.*
-import Presentacion.*
-import org.slf4j.Logger
+
+import accesodatos.RepoActividades
+import dominio.*
 import org.slf4j.LoggerFactory
+import presentacion.ConsolaUI
 
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -12,13 +12,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.Locale
 
-class ActividadService(
-    private val consola: ConsolaUI = ConsolaUI(),
-    var repo: RepoActividades = RepoActividades(),
-    val servicioUsuario: UsuariosService = UsuariosService(consola),
-    private val historial: ControlDeHistorial = ControlDeHistorial(),
-    private val logger: Logger = LoggerFactory.getLogger(ActividadService::class.java)
-) {
+class ActividadService {
+    private val consola = ConsolaUI()
+    private val repo = RepoActividades()
+    private val servicioUsuario = UsuariosService(consola)
+    private val historial = ControlDeHistorial()
+    private val logger = LoggerFactory.getLogger(ActividadService::class.java)
 
     fun gestionarPrograma() {
         try {
@@ -34,7 +33,7 @@ class ActividadService(
     }
 
 
-    fun agregarSubtarea() {
+    private fun agregarSubtarea() {
         try {
             // Listar las tareas disponibles para elegir la tarea madre
             consola.listarTareas(repo.tareas)
@@ -68,21 +67,17 @@ class ActividadService(
     }
 
 
-    private fun asociarActividadAUsuario(usuario: Usuario, actividad: Actividad) {
-        if (actividad.obtenerUsuario() == usuario.nombre && !usuario.repoActividades.actividades.contains(actividad)) {
-            usuario.repoActividades.actividades.add(actividad)
-            when (actividad) {
-                is Tarea -> usuario.repoActividades.tareas.add(actividad)
-                is Evento -> usuario.repoActividades.eventos.add(actividad)
-            }
-        }
-    }
-
     private fun usuariosConActividades() {
         try {
             for (usuario in servicioUsuario.usuariosRepo.usuarios) {
                 for (actividad in repo.actividades) {
-                    asociarActividadAUsuario(usuario, actividad)
+                    if (actividad.obtenerUsuario() == usuario.nombre && !usuario.repoActividades.actividades.contains(actividad)) {
+                        usuario.repoActividades.actividades.add(actividad)
+                        when (actividad) {
+                            is Tarea -> usuario.repoActividades.tareas.add(actividad)
+                            is Evento -> usuario.repoActividades.eventos.add(actividad)
+                        }
+                    }
                 }
             }
             logger.trace("Usuarios asociados con actividades correctamente.")
@@ -91,14 +86,12 @@ class ActividadService(
         }
     }
 
-
-    fun cambiarEstado(tarea: Tarea) {
+    private fun cambiarEstado(tarea: Tarea) {
         val estadoNuevo = consola.pedirInfo("CAMBIE EL ESTADO DE LA TAREA: ABIERTA, EN_PROGRESO, FINALIZADA")
         val estado = EstadoTarea.getEstado(estadoNuevo)
         if (estado != null) {
             tarea.actualizarEstado(estado)
             repo.cambiarEstado(tarea, historial, estado)
-            historial.agregarHistorial("Estado de la tarea cambiado a $estado") // Agregar historial aquí
             println("¡Estado de la tarea y su subtarea actualizado con éxito!")
         } else {
             println("¡Error! Estado no válido.")
@@ -125,64 +118,68 @@ class ActividadService(
         }while(opcion != 0)
     }
 
-    fun filtrarPorEstado() {
+    private fun filtrarPorEstado(){
         var opcion = -1
 
-        do {
-            try {
+        do{
+            try{
                 println("1) MOSTRAR ABIERTAS")
                 println("2) MOSTRAR EN PROGRESO")
                 println("3) MOSTRAR FINALIZADAS")
                 println("0) SALIR")
-                opcion = consola.pedirOpcion("Introduce opción", 0, 3)
+                opcion = consola.pedirOpcion("Introduce opción",0,3)
 
-                val filtrado: EstadoTarea? = when (opcion) {
-                    1 -> EstadoTarea.ABIERTA
-                    2 -> EstadoTarea.EN_PROGRESO
-                    3 -> EstadoTarea.FINALIZADA
-                    else -> null
+                var filtrado: EstadoTarea? = null
+
+                when(opcion){
+                    1-> filtrado = EstadoTarea.ABIERTA
+                    2-> filtrado = EstadoTarea.EN_PROGRESO
+                    3-> filtrado = EstadoTarea.FINALIZADA
+                    else-> Exception("El valor introducido se sale del rango")
                 }
 
-                if (filtrado != null) {
-                    val tareasFiltradas = repo.tareas.filter { it.estado == filtrado }.toMutableList()
-                    if (tareasFiltradas.isNotEmpty()) {
-                        consola.listarTareas(tareasFiltradas)
-                    } else {
-                        consola.mostrarMensaje("No hay tareas con el estado solicitado.")
+                for(tarea in repo.tareas){
+                    if(tarea.estado == filtrado){
+                        println(tarea.obtenerDetalle())
                     }
                 }
-            } catch (e: Exception) {
+
+            }catch(e: Exception){
                 println("¡Error! Detalle: $e")
             }
-        } while (opcion != 0)
+        }while(opcion != 0)
     }
 
-    private fun mostrarActividadesUsuario(usuario: Usuario) {
-        for (actividad in usuario.repoActividades.actividades) {
-            println(actividad.obtenerDetalle())
-        }
-    }
-
-    private fun filtradoPorUsuarios() {
+    private fun filtradoPorUsuarios(){
         var seguir = true
-        do {
-            try {
+        do{
+            var encontrado = false
+            try{
                 println("Introduzca el nombre del usuario")
                 val nombre = readln().trim()
-                val usuario = servicioUsuario.usuariosRepo.usuarios.find { it.nombre == nombre }
 
-                if (usuario != null) {
-                    mostrarActividadesUsuario(usuario)
-                } else {
-                    println("El usuario introducido no ha sido encontrado")
+                for(usuario in servicioUsuario.usuariosRepo.usuarios){
+                    if(usuario.nombre == nombre){
+                        encontrado = true
+                        for(actividad in usuario.repoActividades.actividades){
+                            println(actividad.obtenerDetalle())
+                        }
+                    }
                 }
-                seguir = consola.preguntarSeguir()
-            } catch (e: Exception) {
+
+                if(!encontrado){
+                    println("El usuario introducido no ha sido encontrado")
+                    seguir = consola.preguntarSeguir()
+                }
+
+                else{
+                    seguir = consola.preguntarSeguir()
+                }
+            }catch(e: Exception){
                 println("¡Error! Detalle: $e")
             }
-        } while (seguir)
+        }while(seguir)
     }
-
     private fun filtradoPorEtiquetas(){
         var opcion = -1
 
@@ -334,7 +331,7 @@ class ActividadService(
         }
     }
 
-    fun anadirActividad() {
+    private fun anadirActividad() {
         val opcion = consola.pedirOpcion("¿Qué quieres crear?\n1) Tarea\n2) Evento\n0) Cancelar", 0, 2)
         if (opcion == 0) return
 

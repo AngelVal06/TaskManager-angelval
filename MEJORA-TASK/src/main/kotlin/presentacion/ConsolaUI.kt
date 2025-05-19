@@ -1,13 +1,12 @@
-package Presentacion
+package presentacion
 
-import AccesoDatos.RepoActividades
-import AccesoDatos.RepoUsuarios
-import Dominio.Actividad
-import Dominio.EtiquetasTareas
-import Dominio.Evento
-import Dominio.Tarea
-import Dominio.Usuario
-import Servicios.ActividadService
+import accesodatos.RepoActividades
+import accesodatos.RepoUsuarios
+import dominio.Actividad
+import dominio.EtiquetasTareas
+import dominio.Evento
+import dominio.Tarea
+import dominio.Usuario
 
 /**
  * Esta clase hereda los metodos de consola para desarrolarlos.
@@ -168,10 +167,6 @@ class ConsolaUI: Consola {
         return opcion
     }
 
-    override fun mostrarMensaje(s: String) {
-        println(s)
-    }
-
     fun preguntarSeguir(): Boolean {
         val opciones = mapOf("S" to true, "N" to false)
         var seguir: Boolean? = null
@@ -191,26 +186,26 @@ class ConsolaUI: Consola {
     }
 
 
-    private fun mostrarSubtareas(actividad: Tarea) {
-        if (actividad.subTareas.isNotEmpty()) {
-            println("Subtareas:")
-            actividad.subTareas.forEach { subtarea ->
-                println("    - ${subtarea.obtenerDetalle()}")
-            }
-        } else {
-            println("Subtareas:\n    Sin subtareas")
-        }
-    }
-
     override fun listarActividades(actividades: MutableList<Actividad>) {
-        val mostradas = mutableSetOf<String>()
+        val mostradas = mutableSetOf<String>() // Para evitar duplicados en la salida
+
         for (actividad in actividades) {
             val detalle = actividad.obtenerDetalle()
             if (detalle !in mostradas) {
                 println(detalle)
-                mostradas.add(detalle)
+                mostradas.add(detalle) // Registrar como mostrada
+
                 when (actividad) {
-                    is Tarea -> mostrarSubtareas(actividad)
+                    is Tarea -> {
+                        if (actividad.subTareas.isNotEmpty()) {
+                            println("Subtareas:")
+                            actividad.subTareas.forEach { subtarea ->
+                                println("    - ${subtarea.obtenerDetalle()}")
+                            }
+                        } else {
+                            println("Subtareas:\n    Sin subtareas")
+                        }
+                    }
                     is Evento -> println("Sin subtareas (Evento).")
                 }
             }

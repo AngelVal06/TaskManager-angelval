@@ -1,3 +1,8 @@
+
+
+## DOCUMENTACIÓN KDOC EN CÓDIGO
+### ActividadService.kt
+```kotlin
 package servicios
 
 
@@ -404,3 +409,197 @@ class ActividadService {
         }
     }
 }
+```
+
+### Tarea.kt
+```kotlin
+package dominio
+/**
+ * Clase que representa una tarea en el sistema, heredando de Actividad.
+ * Permite gestionar subtareas y estados de la tarea.
+ *
+ * @property etiqueta Clasificación de la tarea (URGENTE, SENCILLA, etc.)
+ * @property estado Estado actual de la tarea (ABIERTA, EN_PROGRESO, FINALIZADA)
+ * @property subTareas Lista de subtareas asociadas a esta tarea
+ */
+class Tarea private constructor(
+    descripcion: String,
+    usuario: String,
+    val etiqueta: EtiquetasTareas
+) : Actividad(descripcion, usuario) {
+
+    init{
+        contador += 1
+    }
+    var estado = EstadoTarea.ABIERTA
+
+    // Lista de subtareas asociadas
+    val subTareas: MutableList<Tarea> = mutableListOf()
+
+    private constructor(
+        usuario: String,
+        id: String,
+        etiqueta: EtiquetasTareas,
+        fechaCreacion: String,
+        descripcion: String,
+        estado: String
+    ) : this(usuario, descripcion, etiqueta) {
+        this.id = id + contador
+        this.fechaCreacion = fechaCreacion
+        this.estado = EstadoTarea.getEstado(estado)!!
+    }
+
+    override fun obtenerDetalle(): String {
+        val subTareasDetalle = if (subTareas.isEmpty()) {
+            "Sin subtareas"
+        } else {
+            subTareas.joinToString(separator = "\n") { "    - ${it.obtenerDetalle()}" }
+        }
+        return super.obtenerDetalle() + ";$estado;$etiqueta;\nSubtareas:\n$subTareasDetalle"
+    }
+
+    /**
+     * Actualiza el estado de la tarea y todas sus subtareas.
+     *
+     * @param estado Nuevo estado a asignar
+     */
+    fun actualizarEstado(estado: EstadoTarea) {
+        this.estado = estado
+        for(tarea in subTareas) {
+            tarea.estado = estado
+        }
+    }
+
+    /**
+     * Agrega una subtarea a esta tarea.
+     *
+     * @param subTarea Subtarea a agregar
+     * @throws IllegalArgumentException Si la subtarea ya tiene subtareas propias
+     */
+    fun agregarSubTarea(subTarea: Tarea) {
+        if (!subTareas.contains(subTarea)) { // Evitar duplicados en la lista de subtareas
+            // Validar que las subtareas no puedan tener más subtareas
+            if (subTarea.subTareas.isNotEmpty()) {
+                throw IllegalArgumentException("Una subtarea no puede tener más subtareas.")
+            }
+            subTareas.add(subTarea)
+        } else {
+            println("La subtarea ya existe, no se añadirá de nuevo.")
+        }
+    }
+
+    companion object {
+        /**
+         * Contador estático para generación de IDs únicos.
+         */
+        var contador = 0
+
+        /**
+         * Crea una nueva instancia de Tarea con los parámetros básicos.
+         *
+         * @param descripcion Descripción de la tarea
+         * @param usuario Usuario asignado a la tarea
+         * @param etiqueta Clasificación de la tarea
+         * @return Nueva instancia de Tarea
+         */
+        fun creaInstancia(descripcion: String, usuario: String, etiqueta: EtiquetasTareas): Tarea {
+            return Tarea(descripcion, usuario, etiqueta)
+        }
+
+        fun creaInstancia(
+            usuario: String,
+            id: String,
+            etiqueta: EtiquetasTareas,
+            fechaCreacion: String,
+            descripcion: String,
+            estado: String
+        ): Tarea {
+            return Tarea(usuario, id, etiqueta, fechaCreacion, descripcion, estado)
+        }
+    }
+}
+```
+
+### ControlDeHistorial.kt
+```kotlin
+package servicios
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.time.LocalDateTime
+/**
+ * Clase para el control y registro del historial de operaciones del sistema.
+ * Permite registrar mensajes tanto en un archivo como mediante un logger.
+ *
+ * @property logger Logger SLF4J para registro de eventos
+ */
+open class ControlDeHistorial {
+
+    private val logger: Logger = LoggerFactory.getLogger(ControlDeHistorial::class.java)
+
+    /**
+     * Agrega una entrada al historial del sistema.
+     * Registra el mensaje tanto en el logger como en el archivo de historial.
+     *
+     * @param msj Mensaje a registrar en el historial
+     * @throws IOException Si ocurre un error al escribir en el archivo
+     */
+    fun agregarHistorial(msj: String) {
+        val log = "${LocalDateTime.now()} -> $msj"
+        logger.info(log) // Registrar en el logger
+        try {
+            File(RUTA_HISTORIAL).appendText("$log\n")
+        } catch (e: Exception) {
+            logger.error("Error al escribir en el historial: ${e.message}", e)
+        }
+    }
+
+    companion object {
+        /**
+         * Ruta del archivo donde se almacena el historial de operaciones.
+         */
+        const val RUTA_HISTORIAL = "MEJORA-TASK/src/main/kotlin/Datos/Historial.txt"
+    }
+}
+```
+
+
+## GENERACIÓN CON DOKKA
+En la terminal ponemos el siguiente comando para generar la documentación en html con dokka:
+
+![img.png](img.png)
+
+Aquí vemos las carpetas y archivos generadas por el dokka. Si le damos a la carpeta "index.html" nos abrirá la documentación generada por el dokka. Si le damos a la carpeta "index.html" nos abrirá la documentación generada por el dokka.
+
+![img_1.png](img_1.png)
+
+Y esta es el resultado de la documentación generada por el dokka. La cual podemos ver en el navegador.
+
+![img_2.png](img_2.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

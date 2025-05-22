@@ -1,5 +1,12 @@
 package dominio
-
+/**
+ * Clase que representa una tarea en el sistema, heredando de Actividad.
+ * Permite gestionar subtareas y estados de la tarea.
+ *
+ * @property etiqueta Clasificación de la tarea (URGENTE, SENCILLA, etc.)
+ * @property estado Estado actual de la tarea (ABIERTA, EN_PROGRESO, FINALIZADA)
+ * @property subTareas Lista de subtareas asociadas a esta tarea
+ */
 class Tarea private constructor(
     descripcion: String,
     usuario: String,
@@ -36,6 +43,11 @@ class Tarea private constructor(
         return super.obtenerDetalle() + ";$estado;$etiqueta;\nSubtareas:\n$subTareasDetalle"
     }
 
+    /**
+     * Actualiza el estado de la tarea y todas sus subtareas.
+     *
+     * @param estado Nuevo estado a asignar
+     */
     fun actualizarEstado(estado: EstadoTarea) {
         this.estado = estado
         for(tarea in subTareas) {
@@ -43,6 +55,12 @@ class Tarea private constructor(
         }
     }
 
+    /**
+     * Agrega una subtarea a esta tarea.
+     *
+     * @param subTarea Subtarea a agregar
+     * @throws IllegalArgumentException Si la subtarea ya tiene subtareas propias
+     */
     fun agregarSubTarea(subTarea: Tarea) {
         if (!subTareas.contains(subTarea)) { // Evitar duplicados en la lista de subtareas
             // Validar que las subtareas no puedan tener más subtareas
@@ -56,8 +74,19 @@ class Tarea private constructor(
     }
 
     companion object {
+        /**
+         * Contador estático para generación de IDs únicos.
+         */
         var contador = 0
 
+        /**
+         * Crea una nueva instancia de Tarea con los parámetros básicos.
+         *
+         * @param descripcion Descripción de la tarea
+         * @param usuario Usuario asignado a la tarea
+         * @param etiqueta Clasificación de la tarea
+         * @return Nueva instancia de Tarea
+         */
         fun creaInstancia(descripcion: String, usuario: String, etiqueta: EtiquetasTareas): Tarea {
             return Tarea(descripcion, usuario, etiqueta)
         }
